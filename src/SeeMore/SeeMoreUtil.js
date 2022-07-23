@@ -34,6 +34,21 @@ async function getTruncationIndex(
     fontWeight,
   })
 
+  const { lineCount: totalCount } = await reactNativeTextSize.measure({
+    text,
+    width: containerWidth,
+    fontSize: scaledFontSize,
+    fontFamily,
+    fontWeight,
+  });
+
+  if (totalCount < numberOfLines) {
+    return undefined;
+  }
+
+  // console.log("======", text);
+  // console.log(`lineCount:${totalCount} `)
+
   let index = 0;
   let start = 0;
   let end = text.length;
@@ -41,6 +56,7 @@ async function getTruncationIndex(
 
   while (start <= end) {
     const middle = end;
+
     // eslint-disable-next-line no-await-in-loop
     const { lastLineWidth, lineCount } = await reactNativeTextSize.measure({
       text: text.slice(0, middle),
@@ -50,16 +66,30 @@ async function getTruncationIndex(
       fontWeight,
       usePreciseWidth: true,
     });
+    // console.log(start, end, lineCount);
+
+    if (lineCount > numberOfLines + 1) {
+      end = start + (middle - 1 - start) / 2;
+      continue
+    } else if (lineCount < numberOfLines) {
+      start = middle + 1;
+      end = start + (end - start) / 2;
+      continue
+    }
+
+    // console.log(`lastLineWidth: ${lastLineWidth + seeMoreWidth}  widthLimit:${widthLimit} lineCount:${lineCount}`);
 
     if (lineCount > numberOfLines || lastLineWidth + seeMoreWidth > widthLimit) {
+      // console.log((lastLineWidth + seeMoreWidth));
+      // console.log(text.slice(0, middle));
       end = middle - 1;
       needMore = true;
     } else {
+      // console.log(text.slice(0, middle));
       index = needMore ? middle - 2 : middle;
       break;
     }
   }
-
 
   let truncationIndex = Math.floor(index);
   return truncationIndex;

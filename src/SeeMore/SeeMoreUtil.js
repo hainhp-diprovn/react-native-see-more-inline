@@ -1,11 +1,6 @@
 import { PixelRatio } from 'react-native';
 import reactNativeTextSize from 'react-native-text-size';
 
-/**
- * When difference between partialTextWidth and widthLimit is less than
- * this value, we mark the truncation index.
- */
-const DIFFERENCE_THRESHOLD = 10;
 
 /**
  * Finds the point where the text will be truncated, leaving enough space to show
@@ -30,56 +25,43 @@ async function getTruncationIndex(
 ) {
   const scaledFontSize = Math.round(fontSize * PixelRatio.getFontScale());
 
-  const { width: totalTextWidth } = await reactNativeTextSize.measure({
-    text,
+  const widthLimit = (containerWidth);
+
+  const { width: seeMoreWidth } = await reactNativeTextSize.measure({
+    text: seeMoreText,
     fontSize: scaledFontSize,
     fontFamily,
     fontWeight,
-  });
-
-  /**
-   * Max possible width of the text when it is collapsed.
-   * 10 is approx value of white space width per line.
-   */
-  const widthLimit = (containerWidth - 10) * numberOfLines;
-
-  if (totalTextWidth < widthLimit) {
-    return undefined;
-  }
+  })
 
   let index = 0;
   let start = 0;
-  let end = text.length - 1;
+  let end = text.length;
+  var needMore = false;
 
   while (start <= end) {
-    const middle = start + (end - start) / 2;
+    const middle = end;
     // eslint-disable-next-line no-await-in-loop
-    const { width: partialTextWidth } = await reactNativeTextSize.measure({
+    const { lastLineWidth, lineCount } = await reactNativeTextSize.measure({
       text: text.slice(0, middle),
+      width: containerWidth,
       fontSize: scaledFontSize,
       fontFamily,
       fontWeight,
+      usePreciseWidth: true,
     });
-    if (Math.abs(widthLimit - partialTextWidth) <= DIFFERENCE_THRESHOLD) {
-      index = middle;
-      break;
-    } else if (partialTextWidth > widthLimit) {
+
+    if (lineCount > numberOfLines || lastLineWidth + seeMoreWidth > widthLimit) {
       end = middle - 1;
+      needMore = true;
     } else {
-      start = middle + 1;
+      index = needMore ? middle - 2 : middle;
+      break;
     }
   }
 
-  let truncationIndex = Math.floor(index) - (seeMoreText.length + 10);
 
-  // If there is a new line character before this truncation index, this will break
-  // So we find the first new line character before truncationIndex and set that as the
-  // new truncation index
-  const newLineCharacterIndex = text.slice(0, truncationIndex).indexOf('\n');
-  if (newLineCharacterIndex > -1) {
-    truncationIndex = newLineCharacterIndex;
-  }
-
+  let truncationIndex = Math.floor(index);
   return truncationIndex;
 }
 

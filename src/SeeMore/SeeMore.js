@@ -119,9 +119,9 @@ class SeeMore extends React.Component {
     }
 
     return (
-      <Text {...this.props}>
-        {isShowingMore ? null : <Text {...this.props}>...</Text>}
-        <Text style={[linkStyle, { color: isLinkPressed ? linkPressedColor : linkColor }]} {...this.panResponder.panHandlers}>
+      <Text {...this.props} allowFontScaling={false}>
+        {isShowingMore ? null : <Text {...this.props} allowFontScaling={false}>...</Text>}
+        <Text style={[linkStyle, { color: isLinkPressed ? linkPressedColor : linkColor }]} {...this.panResponder.panHandlers} allowFontScaling={false}>
           {isShowingMore ? ` ${seeLessText}` : ` ${seeMoreText}`}
         </Text>
       </Text>
@@ -137,8 +137,9 @@ class SeeMore extends React.Component {
         testID="SeeMore"
         onLayout={isShowingMore ? undefined : this.onLayout}
         numberOfLines={isShowingMore ? undefined : numberOfLines}
+        allowFontScaling={false}
       >
-        <Text {...this.props}>{isShowingMore ? text : text.slice(0, truncationIndex)}</Text>
+        <Text {...this.props} allowFontScaling={false}>{isShowingMore ? text : text.slice(0, truncationIndex)}</Text>
         {this.renderSeeMoreSeeLessLink()}
       </Text>
     );
